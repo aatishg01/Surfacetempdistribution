@@ -1,0 +1,350 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>heattransfer</title><meta name="generator" content="MATLAB 9.8"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2022-02-14"><meta name="DC.source" content="heattransfer.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; }
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+span.typesection { color:#A0522D }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">Set boundary conditions</a></li><li><a href="#3">Create matrix of boundary conditions</a></li><li><a href="#4">Create and fill solution matrix</a></li><li><a href="#5">Introduce boundary conditions to matrix</a></li><li><a href="#6">Solve matrix</a></li><li><a href="#7">Update initial table using solved values</a></li><li><a href="#8">Plot surface</a></li></ul></div><pre class="codeinput">clc;
+</pre><h2 id="2">Set boundary conditions</h2><pre class="codeinput"><span class="comment">% Create nxn 2-D surface</span>
+size = 5;
+a = zeros(size,size);
+
+<span class="comment">% Set temperature of sides</span>
+a(1,:) = 100.*ones(size, 1);
+a(:,1) = 100.*ones(size, 1);
+a(:,size) = 150.*ones(size, 1);
+a(size,:) = -150*ones(size, 1);
+</pre><h2 id="3">Create matrix of boundary conditions</h2><pre class="codeinput"><span class="comment">% Constants that will be used throughout</span>
+c1 = (length(a)-2)^2; <span class="comment">% number of nodes</span>
+c2 = length(a)-2;     <span class="comment">% n of nxn solution matrix</span>
+c3 = length(a)-3;     <span class="comment">% Honestly don't need this but it's legacy at this point</span>
+
+<span class="comment">% Create and fill boundary matrix using boundary conditions</span>
+<span class="comment">% See external documentation for justification</span>
+boundaries = zeros(c1,4);
+
+<span class="comment">% Top</span>
+<span class="keyword">for</span> i = 1:c2
+    boundaries(i,1) = -a(1, i+1);
+<span class="keyword">end</span>
+count = 2;
+<span class="comment">% Left</span>
+<span class="keyword">for</span> i = (c1-2):c1
+    boundaries(i,4) = -a(size, count);
+    count = count + 1;
+<span class="keyword">end</span>
+count = 2;
+<span class="comment">% Right</span>
+<span class="keyword">for</span> i = 1:c3+1:c1
+    boundaries(i,2) = -a(count, 1);
+    count = 1+count;
+<span class="keyword">end</span>
+count = 2;
+<span class="comment">% Bottom</span>
+<span class="keyword">for</span> i = 3:c3+1:c1
+    boundaries(i,3) = -a(count, size);
+    count = 1+count;
+<span class="keyword">end</span>
+</pre><h2 id="4">Create and fill solution matrix</h2><pre class="codeinput"><span class="comment">% Create an nxn solution space</span>
+b = zeros(c1, c1);
+
+<span class="comment">% Fill in solution matrix. See external documentation for justification</span>
+
+<span class="comment">% Repeated throughout</span>
+repeat = [1 -4 1];
+fillin = [1, zeros(1, c3-1) , repeat, zeros(1, c3-1), 1];
+
+<span class="comment">% Fill in top</span>
+count1 = round(length(fillin)/2);
+count2 = 1;
+<span class="keyword">for</span> j = length(fillin)/2:-1:0
+    b(count2,:) = b(count2,:) + [fillin(j:length(fillin)), zeros(1, length(b)-count1)];
+    count2 = count2 + 1;
+    count1 = count1 + 1;
+<span class="keyword">end</span>
+
+<span class="comment">% Fill in middle</span>
+count3 = 1;
+<span class="keyword">while</span> count1 &lt; c1
+    fillin(1:j);
+    [zeros(1,count3), fillin, zeros(1,length(b)-count1+count3)];
+    j =length(fillin);
+    b(count2,:) = b(count2,:) + [zeros(1,count3), fillin, zeros(1,length(b)-count1)];
+    count2 = count2 + 1;
+    count1 = count1 +1;
+    count3 = count3 + 1;
+<span class="keyword">end</span>
+
+<span class="comment">% Fill in bottom</span>
+<span class="keyword">for</span> j = length(fillin):-1:length(fillin)/2
+    fillin(1:j);
+    b(count2,:) = b(count2,:) + [zeros(1,count3), fillin(1:j)];
+    count2 = count2 + 1;
+    count3 = count3 + 1;
+<span class="keyword">end</span>
+
+<span class="comment">% Insert zeros to account for sides of surface</span>
+<span class="keyword">for</span> i = c2:c2:length(b)-1
+    b(i,i+1) = 0;
+<span class="keyword">end</span>
+<span class="keyword">for</span> i = c2+1:c2:length(b)
+    b(i,i-1) = 0;
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Warning: Integer operands
+are required for colon
+operator when used as
+index. 
+Warning: Integer operands
+are required for colon
+operator when used as
+index. 
+Warning: Integer operands
+are required for colon
+operator when used as
+index. 
+Warning: Integer operands
+are required for colon
+operator when used as
+index. 
+Warning: Integer operands
+are required for colon
+operator when used as
+index. 
+</pre><h2 id="5">Introduce boundary conditions to matrix</h2><pre class="codeinput">b = [b, ones(c1, 1)];
+<span class="keyword">for</span> i = 1:length(b)-1
+    b(i,length(b)) = sum(boundaries(i,:));
+<span class="keyword">end</span>
+</pre><h2 id="6">Solve matrix</h2><pre class="codeinput">b
+<span class="comment">% boundaries</span>
+b = rref(b);
+</pre><pre class="codeoutput">
+b =
+
+    -4     1     0     1     0     0     0     0     0  -200
+     1    -4     1     0     1     0     0     0     0  -100
+     0     1    -4     0     0     1     0     0     0  -250
+     1     0     0    -4     1     0     1     0     0  -100
+     0     1     0     1    -4     1     0     1     0     0
+     0     0     1     0     1    -4     0     0     1  -150
+     0     0     0     1     0     0    -4     1     0    50
+     0     0     0     0     1     0     1    -4     1   150
+     0     0     0     0     0     1     0     1    -4     0
+
+</pre><h2 id="7">Update initial table using solved values</h2><pre class="codeinput">c = a;
+count = 1;
+<span class="keyword">for</span> i = 1:length(c)-2
+    <span class="keyword">for</span> j = 1:length(c)-2
+        c(i+1,j+1) = b(count, length(b));
+        count = count + 1;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><h2 id="8">Plot surface</h2><pre class="codeinput">c;
+s = surf(c)
+zlabel(<span class="string">'Temperature, Degrees Celsius'</span>)
+</pre><pre class="codeoutput">
+s = 
+
+  Surface with properties:
+
+       EdgeColor: [0 0 0]
+       LineStyle: '-'
+       FaceColor: 'flat'
+    FaceLighting: 'flat'
+       FaceAlpha: 1
+           XData: [1 2 3 4 5]
+           YData: [5&times;1 double]
+           ZData: [5&times;5 double]
+           CData: [5&times;5 double]
+
+  Use GET to show all properties
+
+</pre><img vspace="5" hspace="5" src="heattransfer_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2020a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clc;
+%% Set boundary conditions
+
+% Create nxn 2-D surface
+size = 5; 
+a = zeros(size,size);
+
+% Set temperature of sides
+a(1,:) = 100.*ones(size, 1);
+a(:,1) = 100.*ones(size, 1);
+a(:,size) = 150.*ones(size, 1);
+a(size,:) = -150*ones(size, 1);
+
+
+
+%% Create matrix of boundary conditions
+
+% Constants that will be used throughout
+c1 = (length(a)-2)^2; % number of nodes
+c2 = length(a)-2;     % n of nxn solution matrix
+c3 = length(a)-3;     % Honestly don't need this but it's legacy at this point
+
+% Create and fill boundary matrix using boundary conditions
+% See external documentation for justification
+boundaries = zeros(c1,4);
+
+% Top
+for i = 1:c2
+    boundaries(i,1) = -a(1, i+1);
+end
+count = 2;
+% Left
+for i = (c1-2):c1
+    boundaries(i,4) = -a(size, count);
+    count = count + 1;
+end
+count = 2;
+% Right
+for i = 1:c3+1:c1
+    boundaries(i,2) = -a(count, 1);
+    count = 1+count;
+end
+count = 2;
+% Bottom
+for i = 3:c3+1:c1
+    boundaries(i,3) = -a(count, size);
+    count = 1+count;
+end
+
+%% Create and fill solution matrix
+
+% Create an nxn solution space
+b = zeros(c1, c1);
+
+% Fill in solution matrix. See external documentation for justification
+
+% Repeated throughout
+repeat = [1 -4 1];
+fillin = [1, zeros(1, c3-1) , repeat, zeros(1, c3-1), 1];
+
+% Fill in top 
+count1 = round(length(fillin)/2);
+count2 = 1;
+for j = length(fillin)/2:-1:0
+    b(count2,:) = b(count2,:) + [fillin(j:length(fillin)), zeros(1, length(b)-count1)];
+    count2 = count2 + 1;
+    count1 = count1 + 1;
+end
+
+% Fill in middle
+count3 = 1;
+while count1 < c1
+    fillin(1:j);
+    [zeros(1,count3), fillin, zeros(1,length(b)-count1+count3)];
+    j =length(fillin);
+    b(count2,:) = b(count2,:) + [zeros(1,count3), fillin, zeros(1,length(b)-count1)];
+    count2 = count2 + 1;
+    count1 = count1 +1;
+    count3 = count3 + 1;
+end
+
+% Fill in bottom
+for j = length(fillin):-1:length(fillin)/2
+    fillin(1:j);
+    b(count2,:) = b(count2,:) + [zeros(1,count3), fillin(1:j)];
+    count2 = count2 + 1;
+    count3 = count3 + 1;
+end
+
+% Insert zeros to account for sides of surface
+for i = c2:c2:length(b)-1
+    b(i,i+1) = 0;
+end
+for i = c2+1:c2:length(b)
+    b(i,i-1) = 0;
+end
+
+%% Introduce boundary conditions to matrix
+b = [b, ones(c1, 1)];
+for i = 1:length(b)-1
+    b(i,length(b)) = sum(boundaries(i,:));
+end
+
+%% Solve matrix
+b
+% boundaries
+b = rref(b);
+
+%% Update initial table using solved values
+c = a;
+count = 1;
+for i = 1:length(c)-2
+    for j = 1:length(c)-2
+        c(i+1,j+1) = b(count, length(b));
+        count = count + 1;
+    end
+end
+
+%% Plot surface
+c;
+s = surf(c)
+zlabel('Temperature, Degrees Celsius')
+
+##### SOURCE END #####
+--></body></html>
