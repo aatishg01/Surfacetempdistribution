@@ -29,7 +29,7 @@ for i = 1:c2
     boundaries(i,1) = -a(1, i+1);
 end
 count = 2;
-% Left
+% Bottom
 for i = (c1-2):c1
     boundaries(i,4) = -a(size, count);
     count = count + 1;
@@ -42,7 +42,7 @@ for i = 1:c3+1:c1
 end
 count = 2;
 % Bottom
-for i = 3:c3+1:c1
+for i = c3+1:c3+1:c1
     boundaries(i,3) = -a(count, size);
     count = 1+count;
 end
